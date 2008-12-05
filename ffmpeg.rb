@@ -9,11 +9,16 @@
 # LINKS:
 # http://www.itbroadcastanddigitalcinema.com/ffmpeg_howto.html#Generic_Syntax
 # http://ffmpeg.x264.googlepages.com/mapping
+ROOT_DIR = File.dirname(__FILE__)
+
+$:.reject! { |e| e.include? 'TextMate' }
+require 'rubygems'
 require 'yaml'
 require 'benchmark'
 require 'activesupport'
 require 'fileutils'
 require 'erb'
+#require 'animoto_extensions'
 
 class Ffmpeg
   attr_reader :presets, :results
@@ -32,13 +37,19 @@ class Ffmpeg
 
   def test_compression(input_path, test_options)
     require 'benchmark'
-      @results = []
+    @results = []
+
+    # version this test so that subsequent tests don't overwrite
+    render_id = Time.now.strftime('%Y%m%d%H%M')
+    output_dir = ROOT_DIR + "/output/#{render_id}"
+    FileUtils.mkdir_p(output_dir)
 
     test_options.each_with_index do |test_option, index|
       @results[index] = {}
+
       # setup file paths
       output_filename = "#{index}.mp4"
-      output_path = File.dirname(input_path) + '/' + output_filename
+      output_path = output_dir + '/' + output_filename
 
       # merge user specified options with default preset
       options = @presets[:h264]
@@ -55,13 +66,16 @@ class Ffmpeg
       end
     
       # setup results hash
-      results[index][:time] = time
-      results[index][:size] = File.size(output_path) / 1000.0 / 1000.0
-      results[index][:filename] = output_filename
-      results[index][:options] = test_option
+      @results[index][:time] = time
+      @results[index][:size] = File.size(output_path) / 1000.0 / 1000.0
+      @results[index][:filename] = "../output/#{render_id}/#{output_filename}"
+      @results[index][:options] = test_option
     end
     
-    create_html
+    # create html
+    output_path = ROOT_DIR + '/output/side_by_side.html'
+    create_html(output_path)
+    FileUtils.cp(output_path, output_dir) # make backup copy in versioned dir
   end
   
   def pretty_print_results
@@ -71,10 +85,9 @@ class Ffmpeg
     end
   end
   
-  def create_html
-    html_path = 'output/side_by_side.html'
+  def create_html(output_path)
     rhtml = ERB.new( File.read('side_by_side.rhtml') )
-    File.open(html_path, 'w') {|f| f.write( rhtml.result ) }
+    File.open(output_path, 'w') {|f| f.write( rhtml.result(binding) ) }
   end
   
   private
@@ -115,5 +128,5 @@ test_options = [  {}, #using defaults
                   { :subq => 7 }]
                   
 
-#f = Ffmpeg.new
-#f.test_compression('/Users/stephenclifton/code/compression_tests/input/0RlQQf02medZl5XK0pOs0w/jpg/%06d.jpg', test_options)
+f = Ffmpeg.new
+f.test_compression('/Users/stephenclifton/code/compression_tests/input/0RlQQf02medZl5XK0pOs0w/jpg/%06d.jpg', test_options)

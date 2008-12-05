@@ -6,18 +6,19 @@
   <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
   <title>Side by side compression comparison</title>
 
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <!-- <link rel="stylesheet" title="holiday" href="style.css" media="screen"> -->
-  <script src="http://ajax.googleapis.com/ajax/libs/swfobject/2.1/swfobject.js" type="text/javascript"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js" type="text/javascript"></script>
+  <script src="../public/swfobject.js" type="text/javascript"></script>
 
   <script type="text/javascript" charset="utf-8">
-    var player;
+    var player1 = null;
+	var player2 = null;
+	var currentPosition = 0;
 
 	function createPlayer(thePlaceholder, thePlayerId, theFile, theAutostart) {
 	    var flashvars = {
 	            file:theFile, 
-	            autostart:theAutostart
+	            autostart:theAutostart,
+	            playlistsize:"150",
+                playlist:"bottom"
 	    }
 	    var params = {
 	            allowfullscreen:"true", 
@@ -27,31 +28,47 @@
 	            id:thePlayerId,  
 	            name:thePlayerId
 	    }
-	    swfobject.embedSWF("player.swf", thePlaceholder, "320", "196", "9.0.115", false, flashvars, params, attributes);
+	    swfobject.embedSWF("../public/player.swf", thePlaceholder, "432", "400", "9.0.115", false, flashvars, params, attributes);
 	}
 
 	function init() {
-	    createPlayer("placeholder1", "player1", "http://content.bitsontherun.com/videos/3ta6fhJQ.flv", false);
-	    createPlayer("placeholder2", "player2", "http://content.bitsontherun.com/videos/qyehIiBT.flv", false);
+	    createPlayer("placeholder1", "player1", "../output/1/0.mp4", false);
+	    createPlayer("placeholder2", "player2", "../output/1/1.mp4", false);
 	}
 
-    function playerReady(obj) {
-	  	var imageUrl = '';
-    	player = document.getElementById('player');
-    	player.addModelListener('STATE', "stateChanged");
-    	playlist = [
-        	<% @results.each do |r| %>
-          		 {'file': '<%= r[:filename] %>', 'image': imageUrl},
-        	<% end %>
-		]
-      	player.sendEvent('LOAD', playlist);
+    function playerReady(thePlayer) {
+		if (thePlayer.id == 'player1') {
+			player1 = window.document[thePlayer.id];
+			player1.addModelListener("TIME", "positionListener");
+		} else if (thePlayer.id == 'player2')
+			player2 = window.document[thePlayer.id];
     };
-    
+
+	function loadPlaylists(){
+		var playlist = [
+<% @results.each do |r| %>
+   		 	{'file': '<%= r[:filename] %>', 'title':'<%= r[:filename] %>'},
+<% end %>
+		]
+		
+		player1.sendEvent('LOAD', playlist);
+		player2.sendEvent('LOAD', playlist);
+	}
+		
+	function scrubAhead(){
+		currentPosition += 1;
+		player1.sendEvent('SEEK', currentPosition);
+		player1.sendEvent('PLAY');
+		player2.sendEvent('SEEK', currentPosition);
+		player2.sendEvent('PLAY');
+	}
+
+	function positionListener(obj) {
+		currentPosition = obj.position; 
+	}
+
   </script>
 </head>
-
-<script type="text/javascript">
-
 
 <body onload="init();">
 
@@ -65,6 +82,11 @@
 	    </div>
 	</td></tr></table>
 	
+	<ul>
+	<li><a href="javascript:loadPlaylists()">Load playlists</a>.</li>
+	<li><a href="javascript:scrubAhead()">Scrub 30 Seconds forward</a>.</li>
+	</ul>
+	
     <script type="text/javascript" charset="utf-8">
       urchinTracker = function(path) {
         if (typeof(console) != 'undefined') {
@@ -72,6 +94,15 @@
         }
       }
     </script>
+
+<P>
+SETUP:<BR>
+1) ln -nfs /Users/stephenclifton/code/compression_tests /Library/WebServer/Documents/compression <BR>
+2) apachectl start<BR>
+3) open http://localhost/compression/output/side_by_side.html<BR>
+
 </body>
 </html>
+
+
 
