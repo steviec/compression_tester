@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title>Side by side compression comparison</title>
+
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <!-- <link rel="stylesheet" title="holiday" href="style.css" media="screen"> -->
+  <script src="http://ajax.googleapis.com/ajax/libs/swfobject/2.1/swfobject.js" type="text/javascript"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js" type="text/javascript"></script>
+
+  <script type="text/javascript" charset="utf-8">
+    var player;
+
+	function createPlayer(thePlaceholder, thePlayerId, theFile, theAutostart) {
+	    var flashvars = {
+	            file:theFile, 
+	            autostart:theAutostart
+	    }
+	    var params = {
+	            allowfullscreen:"true", 
+	            allowscriptaccess:"always"
+	    }
+	    var attributes = {
+	            id:thePlayerId,  
+	            name:thePlayerId
+	    }
+	    swfobject.embedSWF("player.swf", thePlaceholder, "320", "196", "9.0.115", false, flashvars, params, attributes);
+	}
+
+	function init() {
+	    createPlayer("placeholder1", "player1", "http://content.bitsontherun.com/videos/3ta6fhJQ.flv", false);
+	    createPlayer("placeholder2", "player2", "http://content.bitsontherun.com/videos/qyehIiBT.flv", false);
+	}
+
+    function playerReady(obj) {
+	  	var imageUrl = '';
+    	player = document.getElementById('player');
+    	player.addModelListener('STATE', "stateChanged");
+    	playlist = [
+        	<% @results.each do |r| %>
+          		 {'file': '<%= r[:filename] %>', 'image': imageUrl},
+        	<% end %>
+		]
+      	player.sendEvent('LOAD', playlist);
+    };
+    
+  </script>
+</head>
+
+<script type="text/javascript">
+
+
+<body onload="init();">
+
+	<table><tr><td>
+	    <div id="wrapper1">
+	        <div id="placeholder1"></div>
+	    </div>
+    </td><td>
+		<div id="wrapper2">
+	        <div id="placeholder2"></div>
+	    </div>
+	</td></tr></table>
+	
+    <script type="text/javascript" charset="utf-8">
+      urchinTracker = function(path) {
+        if (typeof(console) != 'undefined') {
+          console.info("urchinTracker call: " + path);
+        }
+      }
+    </script>
+</body>
+</html>
+
