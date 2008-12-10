@@ -1,5 +1,4 @@
-ROOT_DIR = File.dirname(__FILE__)
-
+# fix for annoying textmate issue when running from TM
 $:.reject! { |e| e.include? 'TextMate' }
 
 require 'rubygems'
@@ -12,6 +11,9 @@ require 'erb'
 
 # my libs
 require 'ffmpeg'
+
+# TODO
+# -split into CompressionTester and CompressionTest, like Migrator/Migration
 
 class CompressionTest < ActiveRecord::Base
   attr_accessible :time, :size, :flags, :error
@@ -27,7 +29,8 @@ class CompressionTest < ActiveRecord::Base
       output_path = "#{output_dir}/#{ct.filename}"
 
       # special handling for multiple passes
-      time = Benchmark.realtime do     
+      time = Benchmark.realtime do
+        puts "FFMPEG: using options: #{test_option.inspect}"
         Ffmpeg.run(input_path, output_path, test_option)
       end
     
@@ -68,14 +71,9 @@ class CompressionTest < ActiveRecord::Base
     end
   end
 
-  def self.initialize_paths
-    output_dir = ROOT_DIR + "/output"
-    FileUtils.mkdir_p(output_dir)
-  end
-
   def self.create_html(output_path)
     # copy all source files over
-    FileUtils.cp('../public/*', output_path)
+    FileUtils.cp(Dir['public/*'], File.dirname(output_path))
     
     # generate html file
     @@results = CompressionTest.find(:all)

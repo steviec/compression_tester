@@ -24,15 +24,17 @@ class Ffmpeg
     end
   end
   
-  def self.run(input_path, output_path, options={})
+  def self.run(input_path, output_path, user_options={})
     # merge user specified options with default preset
     options = presets[:h264]
-    options.merge!( options )
+    options.merge!( user_options )
     
     (options[:pass] ? 2 : 1).times do |i|
-      options[:pass] = i + 1 if options[:pass]
-      final_options = options
-      final_options.merge!(first_pass_overrides) if options[:pass] && options[:pass] == 1
+      final_options = options.dup
+      if final_options[:pass]
+        final_options[:pass] = i + 1
+        final_options.merge!( presets[:first_pass_overrides]) if final_options[:pass] == 1        
+      end
       command_string = compile_ffmpeg_command(input_path, output_path, final_options)
       puts "RUNNING: #{command_string}"
       `#{ command_string }`
