@@ -6,7 +6,7 @@
   <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
   <title>Side by side compression comparison</title>
 
-  <script src="../public/swfobject.js" type="text/javascript"></script>
+  <script src="swfobject.js" type="text/javascript"></script>
 
   <script type="text/javascript" charset="utf-8">
     var player1 = null;
@@ -17,8 +17,8 @@
 	    var flashvars = {
 	            file:theFile, 
 	            autostart:theAutostart,
-	            playlistsize:"150",
-                playlist:"bottom"
+	            // playlistsize:"150",
+	            //                 playlist:"bottom"
 	    }
 	    var params = {
 	            allowfullscreen:"true", 
@@ -28,7 +28,7 @@
 	            id:thePlayerId,  
 	            name:thePlayerId
 	    }
-	    swfobject.embedSWF("../public/player.swf", thePlaceholder, "432", "400", "9.0.115", false, flashvars, params, attributes);
+	    swfobject.embedSWF("player.swf", thePlaceholder, "864", "480", "9.0.115", false, flashvars, params, attributes);
 	}
 
 	function init() {
@@ -46,8 +46,8 @@
 
 	function loadPlaylists(){
 		var playlist = [
-<% @results.each do |r| %>
-   		 	{'file': '<%= r[:filename] %>', 'title':'<%= r[:filename] %>'},
+<% @@results.each do |r| %>
+   		 	{'file': '<%= r.filename %>', 'title':'<%= r.filename %>'},
 <% end %>
 		]
 		
@@ -62,7 +62,11 @@
 		player2.sendEvent('SEEK', currentPosition);
 		player2.sendEvent('PLAY');
 	}
-
+	
+	function loadFile(filename, playerId){
+		window.document[playerId].sendEvent('LOAD', filename)
+	}
+	
 	function positionListener(obj) {
 		currentPosition = obj.position; 
 	}
@@ -76,12 +80,24 @@
 	    <div id="wrapper1">
 	        <div id="placeholder1"></div>
 	    </div>
-    </td><td>
+    </td></tr>
+	<tr><td>
 		<div id="wrapper2">
 	        <div id="placeholder2"></div>
 	    </div>
 	</td></tr></table>
-	
+
+	<P>
+	<table border=1>
+		<% @@results.each do |r| %>
+		<tr><td width = 500><%= r.id %>:  <%= r.size %>MB, <%= r.time %>s (<%= r.flags %>)  </td>
+			<td><a href="javascript:loadFile('<%= r.filename %>', 'player1')"> X </a></td>
+			<td><a href="javascript:loadFile('<%= r.filename %>', 'player2')"> X </a></td> 
+		</tr>		
+		<% end %>
+	</table>
+	<P>
+
 	<ul>
 	<li><a href="javascript:loadPlaylists()">Load playlists</a>.</li>
 	<li><a href="javascript:scrubAhead()">Scrub 30 Seconds forward</a>.</li>

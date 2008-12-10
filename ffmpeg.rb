@@ -9,19 +9,12 @@
 # LINKS:
 # http://www.itbroadcastanddigitalcinema.com/ffmpeg_howto.html#Generic_Syntax
 # http://ffmpeg.x264.googlepages.com/mapping
-ROOT_DIR = File.dirname(__FILE__)
 
-$:.reject! { |e| e.include? 'TextMate' }
 require 'rubygems'
-require 'yaml'
-require 'benchmark'
 require 'activesupport'
-require 'fileutils'
-require 'erb'
-#require 'animoto_extensions'
 
 class Ffmpeg
-  attr_reader :presets, :results
+  cattr_reader :presets
 
   # ffmpeg frame sequences must start with a "1" frame  
   def self.rename_frame_sequence
@@ -31,102 +24,40 @@ class Ffmpeg
     end
   end
   
-  def initialize
-    load_presets
-  end
-
-  def test_compression(input_path, test_options)
-    require 'benchmark'
-    @results = []
-
-    # version this test so that subsequent tests don't overwrite
-    render_id = Time.now.strftime('%Y%m%d%H%M')
-    output_dir = ROOT_DIR + "/output/#{render_id}"
-    FileUtils.mkdir_p(output_dir)
-
-    test_options.each_with_index do |test_option, index|
-      @results[index] = {}
-
-      # setup file paths
-      output_filename = "#{index}.mp4"
-      output_path = output_dir + '/' + output_filename
-
-      # merge user specified options with default preset
-      options = @presets[:h264]
-      options.merge!( test_option )
+  def self.run(input_path, output_path, options={})
+    # merge user specified options with default preset
+    options = presets[:h264]
+    options.merge!( options )
     
-      # special handling for multiple passes
-      time = Benchmark.realtime do     
-        (options[:pass] ? 2 : 1).times do |i|
-          options[:pass] = i + 1 if options[:pass]
-          final_options = options
-          final_options.merge!(first_pass_overrides) if options[:pass] && options[:pass] == 1
-          `#{ compile_ffmpeg_command(input_path, output_path, final_options) }`
-        end
-      end
-    
-      # setup results hash
-      @results[index][:time] = time
-      @results[index][:size] = File.size(output_path) / 1000.0 / 1000.0
-      @results[index][:filename] = "../output/#{render_id}/#{output_filename}"
-      @results[index][:options] = test_option
+    (options[:pass] ? 2 : 1).times do |i|
+      options[:pass] = i + 1 if options[:pass]
+      final_options = options
+      final_options.merge!(first_pass_overrides) if options[:pass] && options[:pass] == 1
+      command_string = compile_ffmpeg_command(input_path, output_path, final_options)
+      puts "RUNNING: #{command_string}"
+      `#{ command_string }`
     end
-    
-    # create html
-    output_path = ROOT_DIR + '/output/side_by_side.html'
-    create_html(output_path)
-    FileUtils.cp(output_path, output_dir) # make backup copy in versioned dir
-  end
-  
-  def pretty_print_results
-    puts "NAME\tTIME\tSIZE"
-    @results.each_with_index do |result, index|
-      puts "#{result[:filename]}\t#{'%.2f' % result[:time]}\t#{'%.2f' % result[:size]}"
-    end
-  end
-  
-  def create_html(output_path)
-    rhtml = ERB.new( File.read('side_by_side.rhtml') )
-    File.open(output_path, 'w') {|f| f.write( rhtml.result(binding) ) }
   end
   
   private
 
-  def load_presets
-    @presets = HashWithIndifferentAccess.new
+  def self.presets
+    ff_presets = HashWithIndifferentAccess.new
     preset_dir = File.dirname(__FILE__) + '/presets'
-    Dir[preset_dir + '/*'].each {|f| @presets.merge!(YAML.load_file(f)) }
+    Dir[preset_dir + '/*'].each {|f| ff_presets.merge!(YAML.load_file(f)) }
+    ff_presets
   end
   
   # converts key/value pair to "-key value", handling blank values
   # and single quoting bad chars
-  def serialize_option(key, value=nil)
+  def self.serialize_option(key, value=nil)
     value = "'#{value}'" if value =~ /[()]/
     '-' + key.to_s + (value ? " #{value}" : '')
   end
 
-  def compile_ffmpeg_command(input_path, output_path, options)
+  def self.compile_ffmpeg_command(input_path, output_path, options)
     options_string = options.collect{ |key,value| serialize_option(key, value) }.join(' ')
     "ffmpeg -i #{input_path} -y #{options_string} #{output_path}"
   end
   
 end
-
-# test:
-# refs:
-# qcomp: .5 - 1.0
-# bt/b: 1000-3000
-# me: dia/hex/umh
-# subq: 5/6/7
-
-test_options = [  {}, #using defaults
-                  # { :qcomp => 1.0 },
-                  # { :bt => '2000k', :b => '2000k'},
-                  # { :bt => '3000k', :b => '3000k'},
-                  # { :me => 'dia'},
-                  # { :subq => 5 },
-                  { :subq => 7 }]
-                  
-
-f = Ffmpeg.new
-f.test_compression('/Users/stephenclifton/code/compression_tests/input/0RlQQf02medZl5XK0pOs0w/jpg/%06d.jpg', test_options)
