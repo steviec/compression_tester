@@ -16,13 +16,15 @@ require 'ffmpeg'
 # -split into CompressionTester and CompressionTest, like Migrator/Migration
 
 class CompressionTest < ActiveRecord::Base
-  attr_accessible :time, :size, :flags, :error
+  attr_accessible :label, :time, :size, :flags, :error
   
-  def self.run(input_path, output_dir, test_options)
+  def self.run(label, input_path, output_dir, test_options)
     initialize_db
-
+    FileUtils.mkdir_p(output_dir)
+    
     test_options.each do |test_option|
       ct = CompressionTest.new
+      ct.label = label
       ct.save
       
       # setup file paths
@@ -66,17 +68,18 @@ class CompressionTest < ActiveRecord::Base
           table.column :size, :string
           table.column :flags, :string
           table.column :error, :string
+          table.column :label, :string
         end
       end
     end
   end
 
-  def self.create_html(output_path)
+  def self.create_html(label, output_path)
     # copy all source files over
     FileUtils.cp(Dir['public/*'], File.dirname(output_path))
     
     # generate html file
-    @@results = CompressionTest.find(:all)
+    @@results = CompressionTest.find(:all, :conditions => ["label == ?", label])
     rhtml = ERB.new( File.read('side_by_side.rhtml') )
     File.open(output_path, 'w') {|f| f.write( rhtml.result(binding) ) }
   end
