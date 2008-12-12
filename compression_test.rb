@@ -37,21 +37,15 @@ class CompressionTest < ActiveRecord::Base
       end
     
       ct.error = "Could not find output file: #{output_path}" unless File.exists?(output_path)
-      ct.update_attributes!( :time => time, :size => File.size(output_path), :flags => test_option)
+      ct.update_attributes!(  :time => '%.2f' % time, 
+                              :size => '%.2f' % (File.size(output_path) / 1024.0 / 1024.0), 
+                              :flags => test_option)
     end
     
     # create html
-    create_html(output_dir + '/side_by_side.html')
+    create_html(label, output_dir + '/side_by_side.html')
   end
-  
-  # def pretty_print_results
-  #   puts "NAME\tTIME\tSIZE"
-  #   @results.each_with_index do |result, index|
-  #     puts "#{result[:filename]}\t#{'%.2f' % result[:time]}\t#{'%.2f' % result[:size]}"
-  #   end
-  # end
-  #
-  
+    
   def self.initialize_db
     # setup connection
     ActiveRecord::Base.logger = Logger.new(STDOUT)
