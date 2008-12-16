@@ -90,7 +90,7 @@ h264:
   # *ME (motion estimation)
   # dia = low, hex = normal, umh = high (40% slower)
   # 
-  me: 'umh'  
+  me_method: 'umh'  
   me_range: 16
 
   # *SUBQ: time v. quality
@@ -102,7 +102,7 @@ h264:
 # http://www.flashcomguru.com/index.cfm/2008/2/2/jaw-drop-h264
 first_pass_overrides:
   subq: 1  
-  me: 'hex'  
+  me_method: 'hex'  
   partitions: 0  
   trellis: 0  
   flags2: '+mixed_refs'

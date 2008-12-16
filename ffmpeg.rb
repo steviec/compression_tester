@@ -9,6 +9,7 @@
 # (http://lists.mplayerhq.hu/pipermail/mplayer-users/2007-January/065236.html)
 
 require 'rubygems'
+require 'fileutils'
 require 'activesupport'
 
 class Ffmpeg
@@ -17,11 +18,13 @@ class Ffmpeg
   class ExecutionError < StandardError; end
 
   # ffmpeg frame sequences must start with a "1" frame  
+  # TODO: just make soft links instead of moving...
   def self.rename_frame_sequence(input_path)
-    Dir[ File.dirname(input_path) + '/*.jpg' ].each_with_index do |f, i|
+    files = Dir[input_path].sort
+    files.each_with_index do |f, i|
       target_filename = ("%06d" % (i + 1)) + '.jpg'
       puts "RENAMING: #{f} => #{target_filename}"
-      FileUtils.mv(f, target_filename)
+      FileUtils.mv(f, File.join( File.dirname(f), target_filename))
     end
   end
   
@@ -31,7 +34,6 @@ class Ffmpeg
     # handle multiple inputs for muxing files
     mux = true if input_path.is_a?(Array)  # if input is array, assume it's audio & video we want to mux
     input_video = mux ? input_path[0] : input_path
-    #options.merge!( :newaudio => nil ) if mux
     
     # merge user specified options with default preset
     # TODO: use output path extension to automatically determine, e.g.
