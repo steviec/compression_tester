@@ -25,16 +25,32 @@ class Ffmpeg
     end
   end
   
-  def self.run(input_path, output_path, user_options={})
-    # merge user specified options with default preset
-    options = presets[:h264]
+  def self.run(input_path, output_path, input_options={}, output_options={})
+    options = HashWithIndifferentAccess.new
+
+    # handle multiple inputs for muxing files
+    mux = true if input_path.is_a?(Array)  # if input is array, assume it's audio & video we want to mux
+    input_video = mux ? input_path[0] : input_path
+    #options.merge!( :newaudio => nil ) if mux
     
+    # merge user specified options with default preset
+    # TODO: use output path extension to automatically determine, e.g.
+    # options.merge!(presets[preset || output_type])
+    options.merge!( presets[:h264] )
+    
+    # TODO: more user friendly sequence names (/path/to/sequence/*.jpg)
+    # # for image sequences
+    # if video_filename =~ /\*/  #handles image sequence input of "input-*.jpg" form
+    #   video_filename = 'mf://' + video_filename 
+    #   options[:mf] = "fps=#{preset && preset == 'avi-hi' ? 24 : 15}:type=jpg"
+    # end        
+
     # default bitrate type is variable, but if :cqp or :crf specified, use constant
-    bitrate_type = (user_options[:cqp] || user_options[:crf]) ? :constant : :variable
+    bitrate_type = (output_options[:cqp] || output_options[:crf]) ? :constant : :variable
     options.merge!( presets[bitrate_type] )
     
     # merge user overrides
-    options.merge!( user_options )
+    options.merge!( output_options )
     options.merge!( :threads => 0 ) # automatically chooses threading
     
     (options[:pass] ? 2 : 1).times do |i|
@@ -43,7 +59,7 @@ class Ffmpeg
         final_options[:pass] = i + 1
         final_options.merge!( presets[:first_pass_overrides]) if final_options[:pass] == 1        
       end
-      system_call = compile_ffmpeg_command(input_path, output_path, final_options)
+      system_call = compile_ffmpeg_command(input_path, output_path, input_options, final_options)
       puts "RUNNING: #{system_call}"
 
       output = []
@@ -71,10 +87,22 @@ class Ffmpeg
     value = "'#{value}'" if value =~ /[()]/
     '-' + key.to_s + (value ? " #{value}" : '')
   end
+  
+  def self.serialize_options(options)
+    options.collect{ |key,value| serialize_option(key, value) }.join(' ')
+  end
 
-  def self.compile_ffmpeg_command(input_path, output_path, options)
-    options_string = options.collect{ |key,value| serialize_option(key, value) }.join(' ')
-    "ffmpeg -i #{input_path} -y #{options_string} #{output_path}"
+  def self.compile_ffmpeg_command(input_path, output_path, input_options, output_options)
+    # build options strings for input/output
+    input_string = serialize_options(input_options)
+    output_string = serialize_options(output_options)
+
+    # handle multiple inputs for muxing
+    input_path = [input_path] unless input_path.is_a?(Array)  # array-ify input path if not already array
+    input_files_string = input_path.map{|path| "-i #{path}"}.join(' ')  # create multiple "-i <path>" entries
+
+    # build complete command
+    "ffmpeg #{input_string} #{input_files_string} -y #{output_string} #{output_path}"
   end
   
 end

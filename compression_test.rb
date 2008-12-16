@@ -33,7 +33,7 @@ class CompressionTest < ActiveRecord::Base
       # special handling for multiple passes
       time = Benchmark.realtime do
         puts "FFMPEG: using options: #{test_option.inspect}"
-        Ffmpeg.run(input_path, output_path, test_option)
+        Ffmpeg.run(input_path, output_path, {}, test_option)
       end
     
       ct.error = "Could not find output file: #{output_path}" unless File.exists?(output_path)

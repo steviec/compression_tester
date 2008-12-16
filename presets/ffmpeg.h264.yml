@@ -4,7 +4,7 @@
 h264:
 
 # GENERAL
-  f: 'mov'      # format
+  f: 'mp4'      # format
   r: 15         # framerate
   
 # AUDIO  
