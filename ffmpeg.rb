@@ -4,9 +4,12 @@
 # iPod encoding: http://lists.mplayerhq.hu/pipermail/ffmpeg-devel/2006-March/008990.html
 #   http://iambaeba1.wordpress.com/
 # crf vs 2-pass: http://forum.handbrake.fr/viewtopic.php?f=6&t=848&start=0
-# TODO:
+# TODO LONGTERM:
 # "compresion test" -- precompress some vid to test optimal encoding
 # (http://lists.mplayerhq.hu/pipermail/mplayer-users/2007-January/065236.html)
+#
+# TODO SHORTERM:
+# -use instance instead of class level run to store output information
 
 require 'rubygems'
 require 'fileutils'
@@ -18,14 +21,20 @@ class Ffmpeg
   class ExecutionError < StandardError; end
 
   # ffmpeg frame sequences must start with a "1" frame  
-  # TODO: just make soft links instead of moving...
-  def self.rename_frame_sequence(input_path)
+  def self.setup_frame_sequence(input_path)
     files = Dir[input_path].sort
     files.each_with_index do |f, i|
       target_filename = ("%06d" % (i + 1)) + '.jpg'
-      puts "RENAMING: #{f} => #{target_filename}"
-      FileUtils.mv(f, File.join( File.dirname(f), target_filename))
-    end
+      FileUtils.ln_s(f, File.join( File.dirname(f), target_filename))
+    end    
+  end
+  
+  def self.cleanup_frame_sequence(input_path)
+    files = Dir[input_path].sort
+    files.each_with_index do |f, i|
+      target_filename = ("%06d" % (i + 1)) + '.jpg'
+      FileUtils.rm_f(File.join( File.dirname(f), target_filename))
+    end    
   end
   
   def self.run(input_path, output_path, input_options={}, output_options={})
@@ -34,18 +43,15 @@ class Ffmpeg
     # handle multiple inputs for muxing files
     mux = true if input_path.is_a?(Array)  # if input is array, assume it's audio & video we want to mux
     input_video = mux ? input_path[0] : input_path
+    sequence = Dir[input_video].length > 1
     
     # merge user specified options with default preset
     # TODO: use output path extension to automatically determine, e.g.
     # options.merge!(presets[preset || output_type])
     options.merge!( presets[:h264] )
-    
-    # TODO: more user friendly sequence names (/path/to/sequence/*.jpg)
-    # # for image sequences
-    # if video_filename =~ /\*/  #handles image sequence input of "input-*.jpg" form
-    #   video_filename = 'mf://' + video_filename 
-    #   options[:mf] = "fps=#{preset && preset == 'avi-hi' ? 24 : 15}:type=jpg"
-    # end        
+
+    # create softlinks with sequence that fits ffmpeg requirements
+    setup_frame_sequence(input_video) if sequence
 
     # default bitrate type is variable, but if :cqp or :crf specified, use constant
     bitrate_type = (output_options[:cqp] || output_options[:crf]) ? :constant : :variable
@@ -72,6 +78,9 @@ class Ffmpeg
       end
       raise ExecutionError, "#{output.last}" unless $?.success?
     end
+
+  ensure
+    cleanup_frame_sequence(input_video) if sequence
   end
   
   private
