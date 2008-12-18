@@ -1,0 +1,36 @@
+# animoto original FLV presets
+# Not sure how to map these:  autoaspect:predia=2:turbo
+
+flv_animoto:
+
+    # GENERAL
+    f: 'flv'      # format
+    r: 15         # framerate
+
+    # AUDIO  
+    acodec: 'libmp3lame'  
+    ab: '64k'
+    ar: 44100
+
+    # VIDEO
+    b: '500k'
+    bt: '500k'
+    vcodec: 'libmp3lame'
+    g: 250
+
+    # COMPRESSION  
+    me_method: 'dia'
+    me_range: 16
+    
+    # MISC FLAGS
+    cmp: 2
+    subcmp: 2
+    precmp: 2
+    mbd: 2
+    flags: '+aic+cbp+mv0+mv4+loop'
+    trellis: 1
+
+    # Misc others
+    preme: 2
+    dia_size: 2
+    last_pred: 3

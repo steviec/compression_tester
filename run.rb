@@ -28,6 +28,7 @@ test_options = [  { :refs => 6, :bf => 16 },
                   
                   
 
+
 CompressionTest.run( 'U73dWfU0AYC0ZTdR5SKczA',
                      '/Users/stephenclifton/code/compression_tester/input/U73dWfU0AYC0ZTdR5SKczA/jpg/%06d.jpg',
                       '/Users/stephenclifton/code/compression_tester/output/U73dWfU0AYC0ZTdR5SKczA',

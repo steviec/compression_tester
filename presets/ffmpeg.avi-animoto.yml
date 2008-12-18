@@ -1,0 +1,18 @@
+# TIFF/JPEG seq => huffyuv
+# Lossless, FAST, 10x MJPEG size
+# presets['avi'] = { #1
+#   :sws        => 9,
+#   :vf => 'scale=432:240,harddup', :noskip => nil,
+#   :ovc  => 'lavc', :ofps => 15,
+#   :lavcopts => "vcodec=huffyuv:pred=2:format=422P:vstrict=-1",
+#   :oac  => 'pcm',
+# }
+# 
+# presets['avi-hi'] = { #1
+#   :sws        => 9,
+#   :vf => 'scale=864:480,harddup', :noskip => nil,
+#   :ovc  => 'lavc', :ofps => '24000/1001',
+#   :lavcopts => 'vcodec=huffyuv:pred=2:format=422P:vstrict=-1',
+#   :oac  => 'pcm',
+# }
+

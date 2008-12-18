@@ -7,19 +7,24 @@
 # refs: low: 1, high: 1-16
 # flags2: high only
 
+# LINKS:
+# http://rob.opendot.cl/index.php/useful-stuff/ipod-video-guide/
+# http://rob.opendot.cl/index.php/useful-stuff/h264-profiles-and-levels/
+# http://www.catswhocode.com/blog/19-ffmpeg-commands-for-all-needs
+
 h264:
 
 # GENERAL
-  f: 'mp4'      # format
-  r: 15         # framerate
   
 # AUDIO  
   acodec: 'libfaac'  
   ab: '128k'
+  ar: 48000
 
 # VIDEO
   vcodec: 'libx264'  
-
+  f: 'mp4'      # format
+  r: 15         # framerate
 
 # ----------------
 # RATE CONTROL: Variable
@@ -27,17 +32,13 @@ h264:
   # TARGET BITRATE
   # should always be used in 2-pass mode
   b: '1500k'    # bitrate
-
-  # BITRATE TOLERANCE
-  # allowed variable of average bitrate
-  bt: '1500k'  
-
+  bt: '1500k'   # bitrate tolerance
+  
   # QUANTIZER SCALE (VBR only)
   qcomp: 0.6        # compression: 0 = good stills   1 = good motion   .6 = default
   qmin: 10          # good default
   qmax: 51          # good default
   qdiff: 4          # max diff between quantizer scales
-    
 
 # -----------
 # COMPRESSION (frame-type options)
@@ -47,7 +48,7 @@ h264:
   # 1: CABAC
   # CABAC not allowed in baseline (must use 0)
   # 10-15% better compression (but slower)
-  coder: 1  
+  coder: 0
 
   # Enable/disable loop filter
   # rec: +loop
@@ -55,6 +56,9 @@ h264:
 
   # ?
   cmp: 'chroma'  
+
+  # Level: Baseline profile level 3 (Apple's "low-complexity")
+  level: 30
 
   # G: gop length (== keyframe interval == keyint)
   # max distance between i-frames
@@ -74,17 +78,13 @@ h264:
   # reference frames other than the one immediately prior
   # good default: 6   max value: 16
   # change for different profiles (1 = need for low complex profile)
-  refs: 3
+  refs: 1
 
   # Max B-frames (MPEG 1/2/4 only)
   # Not supported by Baseline Profile (ipods)
   # 16 is best; encoder will choose how many _up to_ 16 to use
   # if encoding for hardware, check specs
-  bf: 3
-
-  # H.264 bframe lookahead mode selector (0, 1, 2)
-  # default: 1
-  b_strategy: 1
+  bf: 0
 
 # ----------------
 # RATE CONTROL: Always
@@ -100,13 +100,9 @@ h264:
   # PARTITIONS
   # inter/intra partitions to analyze
   # i8x8 only allowed in High Profile mode
-  partitions: '+parti4x4+partp8x8+partb8x8'  
-
-  # TRELLIS: trellis RD quantization
-  # 0 = disabled   1 = higher qual   slower   2 = max qual   very slow
-  # requires CABAC
-  trellis: 1  
-
+  #partitions: '+parti4x4+partp8x8+partb8x8'  
+  partitions: '+parti4x4+parti8x8+partp8x8'
+  
   # FLAGS2
   # dct8x8: allows choosing betwee 8x8 and 4x4.  High Profile only
   flags2: '+wpred+dct8x8+mixed_refs'  
@@ -120,3 +116,10 @@ h264:
   # *SUBQ: time v. quality
   # 5 = normal   6 = high   7 = best (35% slower)
   subq: 6
+  
+  # misc
+  mbd: 2
+  cmp: 2
+  subcmp: 2
+  flags: '+4mv'
+  trellis: 1

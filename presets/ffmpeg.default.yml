@@ -1,0 +1,33 @@
+# ----------------
+# RATE CONTROL: Constant
+# constant:
+#   crf: 16   # usually in 16..26
+# 
+# # ----------------
+# # RATE CONTROL: Variable
+# variable:
+# 
+#   # TARGET BITRATE
+#   # should always be used in 2-pass mode
+#   b: '1500k'    # bitrate
+# 
+#   # BITRATE TOLERANCE
+#   # allowed variable of average bitrate
+#   bt: '1500k'  
+# 
+#   # QUANTIZER SCALE (VBR only)
+#   qcomp: 0.6        # compression: 0 = good stills   1 = good motion   .6 = default
+#   qmin: 10          # good default
+#   qmax: 51          # good default
+#   qdiff: 4          # max diff between quantizer scales
+#   
+
+# ======================
+# http://www.flashcomguru.com/index.cfm/2008/2/2/jaw-drop-h264
+first_pass_overrides:
+  subq: 1  
+  me_method: 'hex'  
+  partitions: 0  
+  trellis: 0  
+  flags2: '+mixed_refs'
+ 

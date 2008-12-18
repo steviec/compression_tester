@@ -1,0 +1,10 @@
+# From the AppleTV setting on http://handbrake.m0k.org/trac/wiki/BuiltInPresets
+# UGH. QT7 has some major limitations in their mp4 decoding scheme, so can't use b-frames > 1, no aspect ratio, etc.
+# http://www.mplayerhq.hu/DOCS/HTML/en/menc-feat-quicktime-7.html
+# old_presets['mp4-hi'] = {
+# :vf         => 'harddup',
+# :ovc        => 'x264', :x264encopts => 'bitrate=1200:vbv_maxrate=1800:vbv_bufsize=2000:me=umh:nocabac:level_idc=13:global_header',
+# #'bitrate=2500:keyint=300:bframes=3:ref=1:subme=5:me=umh:no-fast-pskip=1:trellis=1:cabac=0:threads=auto',
+# :oac        => 'faac', :faacopts => 'br=160:mpeg=4:object=2:raw', 
+# :of         => 'lavf', :lavfopts => 'format=mp4'
+# }      

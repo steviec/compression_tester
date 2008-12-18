@@ -1,6 +1,8 @@
 # LINKS:
 # http://www.itbroadcastanddigitalcinema.com/ffmpeg_howto.html#Generic_Syntax
 # http://ffmpeg.x264.googlepages.com/mapping
+# http://forum.videohelp.com/
+# http://forum.doom9.org/
 # iPod encoding: http://lists.mplayerhq.hu/pipermail/ffmpeg-devel/2006-March/008990.html
 #   http://iambaeba1.wordpress.com/
 # crf vs 2-pass: http://forum.handbrake.fr/viewtopic.php?f=6&t=848&start=0
@@ -8,8 +10,12 @@
 # "compresion test" -- precompress some vid to test optimal encoding
 # (http://lists.mplayerhq.hu/pipermail/mplayer-users/2007-January/065236.html)
 #
+# presets
+# http://trac.handbrake.fr/wiki/BuiltInPresets
+
 # TODO SHORTERM:
 # -use instance instead of class level run to store output information
+# -use title/author/copyright metadata and pass to ffmpeg to brand our vids
 
 require 'rubygems'
 require 'fileutils'
@@ -24,7 +30,7 @@ class Ffmpeg
   def self.setup_frame_sequence(input_path)
     files = Dir[input_path].sort
     files.each_with_index do |f, i|
-      target_filename = ("%06d" % (i + 1)) + '.jpg'
+      target_filename = 'ffmpeg-' + ("%06d" % (i + 1)) + '.jpg'
       FileUtils.ln_s(f, File.join( File.dirname(f), target_filename))
     end    
   end
@@ -32,11 +38,14 @@ class Ffmpeg
   def self.cleanup_frame_sequence(input_path)
     files = Dir[input_path].sort
     files.each_with_index do |f, i|
-      target_filename = ("%06d" % (i + 1)) + '.jpg'
+      target_filename = 'ffmpeg-' + ("%06d" % (i + 1)) + '.jpg'
       FileUtils.rm_f(File.join( File.dirname(f), target_filename))
     end    
   end
   
+  # getting fuglier
+  # TODO: make this a class instance
+  # store input video/audio, params
   def self.run(input_path, output_path, input_options={}, output_options={})
     options = HashWithIndifferentAccess.new
 
@@ -48,18 +57,30 @@ class Ffmpeg
     # merge user specified options with default preset
     # TODO: use output path extension to automatically determine, e.g.
     # options.merge!(presets[preset || output_type])
-    options.merge!( presets[:h264] )
+    preset = input_options.delete(:preset) || :h264
+    options.merge!( presets[preset] )
 
     # create softlinks with sequence that fits ffmpeg requirements
-    setup_frame_sequence(input_video) if sequence
-
-    # default bitrate type is variable, but if :cqp or :crf specified, use constant
-    bitrate_type = (output_options[:cqp] || output_options[:crf]) ? :constant : :variable
-    options.merge!( presets[bitrate_type] )
+    if sequence
+      setup_frame_sequence(input_video) 
+      massaged_video_path = File.dirname(input_video) + '/ffmpeg-%06d.jpg'
+      if mux
+        input_path[0] = massaged_video_path
+      else
+        input_path = massaged_video_path
+      end
+    end
+    
+# default bitrate type is variable, but if :cqp or :crf specified, use constant   
+#    bitrate_type = (output_options[:cqp] || output_options[:crf]) ? :constant : :variable
+#    options.merge!( presets[bitrate_type] )
     
     # merge user overrides
     options.merge!( output_options )
-    options.merge!( :threads => 0 ) # automatically chooses threading
+    
+    # TODO: figure out best way to set threads
+    # "0" will bomb ntsc-dvd encodes, but specifying a number of frames is fine
+    options.merge!( :threads => 2 ) # automatically chooses threading
     
     (options[:pass] ? 2 : 1).times do |i|
       final_options = options.dup
@@ -82,15 +103,43 @@ class Ffmpeg
   ensure
     cleanup_frame_sequence(input_video) if sequence
   end
-  
-  private
 
+  # parse ffmpeg metadata information for a video/audio stream
+  # NOTE: highly susceptible to breakage as we're relying on parsing
+  # FFMPEG output that could easily change
+  def self.metadata(input_path)
+    info ={}
+    output = `ffmpeg -i #{input_path}`
+    field_mappings = {
+      'Video' => [:codec, :format, :size, :rate],
+      'Audio' => [:codec, :rate, :channels]
+    }
+
+    # find all output lines matching "Stream"
+    streams = output.split(/\n/).select{ |l| l =~ /^\s*Stream #/ }
+    
+    # parse audio/video metadata according to field mapping
+    streams.each do |s|
+      field_mappings.each do |type, fields|
+        if s =~ /#{type}:/ 
+          data = s.split(/#{type}:/)[1].split(/,/).map{|v| v.strip }
+          mapping = [fields, data.slice(0, fields.length)]
+          info[type.downcase.to_sym] = Hash[*mapping.transpose.flatten]
+        end
+      end
+    end  
+    info
+  end
+  
   def self.presets
     ff_presets = HashWithIndifferentAccess.new
     preset_dir = File.dirname(__FILE__) + '/presets'
-    Dir[preset_dir + '/*'].each {|f| ff_presets.merge!(YAML.load_file(f)) }
+    Dir[preset_dir + '/*'].each { |f| ff_presets.merge!(YAML.load_file(f) || {}) }
+
     ff_presets
   end
+    
+  private
   
   # converts key/value pair to "-key value", handling blank values
   # and single quoting bad chars
@@ -116,4 +165,8 @@ class Ffmpeg
     "ffmpeg #{input_string} #{input_files_string} -y #{output_string} #{output_path}"
   end
   
+  def self.fix_metadata
+    # pipe ffmpeg output to STDOUT and then specify filename in flvtool2
+    # ffmpeg <blah blah> - | flvtool2 -U stdin video.flv
+  end
 end
