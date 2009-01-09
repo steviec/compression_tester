@@ -1,0 +1,22 @@
+# NOTE:  ffmpeg HEAD not working with newest libx264
+# FFMPEG: a02a9f1
+# X264 (GOOD): 2b8d6a6
+# X264 (BAD): 6a4a9be
+
+# NOTE: when compiling for different arch, "make clean" doesn't seem to clean it totally.  
+# completely re-clone ffmpeg & swscale from git repo & configure/make/make install
+
+# install assember
+sudo yum install yasm
+
+# x264
+git clone git://git.videolan.org/x264.git
+cd x264
+./configure --enable-shared && make && make install
+ldconfig
+
+# ffmpeg
+git clone git://git.mplayerhq.hu/ffmpeg/
+cd ffmpeg
+git clone git://git.mplayerhq.hu/libswscale/
+./configure --enable-gpl --enable-postproc --enable-swscale --enable-pthreads --enable-libfaac --enable-libfaad --enable-libmp3lame --enable-libx264

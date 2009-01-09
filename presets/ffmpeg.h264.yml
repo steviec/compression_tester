@@ -8,10 +8,6 @@
 # flags2: high only
 
 h264:
-
-# GENERAL
-  f: 'mp4'      # format
-  r: 15         # framerate
   
 # AUDIO  
   acodec: 'libfaac'  
@@ -19,7 +15,8 @@ h264:
 
 # VIDEO
   vcodec: 'libx264'  
-
+  f: 'mp4'      # format
+  r: 15         # framerate
 
 # ----------------
 # RATE CONTROL: Variable
@@ -47,7 +44,7 @@ h264:
   # 1: CABAC
   # CABAC not allowed in baseline (must use 0)
   # 10-15% better compression (but slower)
-  coder: 1  
+  coder: 1
 
   # Enable/disable loop filter
   # rec: +loop
@@ -100,7 +97,7 @@ h264:
   # PARTITIONS
   # inter/intra partitions to analyze
   # i8x8 only allowed in High Profile mode
-  partitions: '+parti4x4+partp8x8+partb8x8'  
+  partitions: '+parti4x4+partp8x8+partb8x8'
 
   # TRELLIS: trellis RD quantization
   # 0 = disabled   1 = higher qual   slower   2 = max qual   very slow
