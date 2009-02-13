@@ -90,7 +90,7 @@
 	<P>
 	<table border=1>
 		<% @@results.each do |r| %>
-		<tr><td width = 500><%= r.id %>:  <%= r.size %>MB, <%= r.time %>s (<%= r.flags %>)  </td>
+		<tr><td width = 500><%= r.id %> (<%= r.format %>): <%= r.size %>MB, <%= r.time %>s (<%= r.flags %>)  </td>
 			<td><a href="javascript:loadFile('<%= r.filename %>', 'player1')"> X </a></td>
 			<td><a href="javascript:loadFile('<%= r.filename %>', 'player2')"> X </a></td> 
 		</tr>		

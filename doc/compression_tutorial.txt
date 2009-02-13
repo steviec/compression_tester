@@ -1,0 +1,21 @@
+http://books.google.com/books?id=LEjJYki9U0wC&pg=PA351&lpg=PA351&dq=understanding+%22video+compression%22+quantization+analysis+%22rate+control%22&source=bl&ots=KrRy5wVrkK&sig=QwJi9fJnpaDSfG7wjXkhRP2rLs8&hl=en&sa=X&oi=book_result&resnum=10&ct=result
+
+http://www.pixeltools.com/rate_control_paper.html
+http://www.pixeltools.com/pixweb2.html
+
+
+RATE CONTROL
+to optimize perceived pic quality and achieve given constant avg bit rate.
+VBR:
+CBR:
+
+1.  Bit Allocation
+need to estimate # bits available, based on
+-picture type
+-buffer size
+-picture complexity (# bits & quantization param used for coding same type of previous pic in GOP)
+
+2.  Rate Control
+a. bits used for each macroblock determined by rate control algo
+b. quantizer step derived from available bits for macroblock
+
